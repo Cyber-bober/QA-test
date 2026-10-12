@@ -1,43 +1,58 @@
-import {Page} from "@playwright/test";
+import { Page, Locator } from "@playwright/test";
 
 enum WidgetPageSelectors {
     WRAPPER = '.sc-dino-typography-h > [class^=widget__]',
     WIDGET_BODY = '[class^=widgetWrapper] > [class^=widget__]',
     HEADER_TEXT = 'header h5',
     BUTTON_OPEN = '[data-test=openWidget]',
-    BUTTON_WRITE_TO_US = '[class^=btn]',
     ARTICLE_POPULAR_TITLE = '[class^=popularTitle__]',
-    ARTICLE_POPULAR_LIST = `${ARTICLE_POPULAR_TITLE} + ul[class^=articles__]`,
-    ARTICLE_POPULAR_LIST_ITEM = `${ARTICLE_POPULAR_LIST} > li`,
+    ARTICLE_POPULAR_LIST = '[class^=popularTitle__] + ul',
+    ARTICLE_POPULAR_LIST_ITEM = 'li',
+    TELEGRAM_LINK = 'a[href*="tlgg.ru/uchi_ru_bot"]',
+    COOKIE_BUTTON = '._UCHI_COOKIE__button',
 }
 
 export class WidgetPage {
-    static selector = WidgetPageSelectors;
+    readonly page: Page;
+    readonly body: Locator;
 
-    constructor(protected page: Page) {}
+    constructor(page: Page) {
+        this.page = page;
+        this.body = page.locator(WidgetPageSelectors.WIDGET_BODY);
+    }
 
-    wrapper() {
-        return this.page.locator(WidgetPage.selector.WRAPPER)
+    async goto() {
+        await this.page.goto('/');
+        const cookie = this.page.locator(WidgetPageSelectors.COOKIE_BUTTON).first();
+        if (await cookie.count()) {
+            await cookie.click().catch(() => {});
+        }
     }
 
     async openWidget() {
-        return this.wrapper().locator(WidgetPage.selector.BUTTON_OPEN).click();
+        await this.page.locator(WidgetPageSelectors.BUTTON_OPEN).click();
+        await this.body.waitFor({ state: 'visible' });
     }
 
-    async getPopularArticles() {
-        return this.wrapper().locator(WidgetPage.selector.ARTICLE_POPULAR_LIST_ITEM).all()
+    getWidgetBody(): Locator {
+        return this.body;
     }
 
-    async clickWriteToUs() {
-        return this.wrapper().locator(WidgetPage.selector.BUTTON_WRITE_TO_US).click();
+    getPopularArticles(): Locator {
+        return this.body
+            .locator(WidgetPageSelectors.ARTICLE_POPULAR_LIST)
+            .locator(`> ${WidgetPageSelectors.ARTICLE_POPULAR_LIST_ITEM}`);
     }
 
-    async getTitle() {
-        return this.wrapper().locator(WidgetPage.selector.HEADER_TEXT).textContent();
+    getPopularTitle(): Locator {
+        return this.body.locator(WidgetPageSelectors.ARTICLE_POPULAR_TITLE);
     }
 
-    getWidgetBody() {
-        return this.page.locator(WidgetPage.selector.WIDGET_BODY);
+    getHeaderText(): Locator {
+        return this.body.locator(WidgetPageSelectors.HEADER_TEXT);
+    }
+
+    getTelegramLink(): Locator {
+        return this.page.locator(WidgetPageSelectors.TELEGRAM_LINK).first();
     }
 }
-

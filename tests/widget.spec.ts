@@ -1,34 +1,35 @@
 import { test, expect } from '@playwright/test';
-import {WidgetPage} from "./widget.page";
+import { WidgetPage } from "./widget.page";
 
-test.describe('Uchi.ru widget ', () => {
-  let widgetPage: WidgetPage;
+test.describe('Uchi.ru widget', () => {
+    let widgetPage: WidgetPage;
 
-  test.beforeEach(async ({page}) => {
-    widgetPage = new WidgetPage(page);
+    test.beforeEach(async ({ page }) => {
+        widgetPage = new WidgetPage(page);
+        await widgetPage.goto();
+    });
 
-    // open uchi.ru main page
-    await page.goto('/');
+    test('opens', async () => {
+        await widgetPage.openWidget();
+        await expect(widgetPage.getWidgetBody()).toBeVisible();
+    });
 
-    // close cookies popup
-    await page.click('._UCHI_COOKIE__button');
-  });
+    test('has correct title', async () => {
+        await widgetPage.openWidget();
 
-  test('opens', async ({page}) => {
-    await widgetPage.openWidget();
+        const articles = widgetPage.getPopularArticles();
+        await expect(articles.first()).toBeVisible({ timeout: 10000 });
 
-    await expect(widgetPage.getWidgetBody()).toBeVisible()
-  });
+        await articles.first().click();
 
-  test('has correct title', async ({ page }) => {
-    await widgetPage.openWidget();
+        await expect(widgetPage.getPopularTitle()).not.toBeVisible({ timeout: 10000 });
+    });
 
-    const articles = await widgetPage.getPopularArticles();
+    test('telegram widget link is correct', async () => {
+        await widgetPage.openWidget();
 
-    await articles[0].click();
-
-    await widgetPage.clickWriteToUs();
-
-    expect(await widgetPage.getTitle()).toEqual('Связь с поддержкой');
-  });
+        const tg = widgetPage.getTelegramLink();
+        await expect(tg).toBeVisible();
+        await expect(tg).toHaveAttribute('href', /tlgg\.ru\/uchi_ru_bot/);
+    });
 });

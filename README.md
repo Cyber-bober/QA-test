@@ -17,3 +17,10 @@ npm ci
 ```shell
 npx playwright test
 ```
+
+## Что изменено
+
+- Селекторы списка статей упрощены: `popularTitle__ + ul` и `> li`.
+- Методы возвращают `Locator`, а не `Promise`/массив - работает с авто-ожиданиями Playwright.
+- Cookie-баннер закрывается безопасно (`count()` + `catch`), `openWidget` ждёт видимости body.
+- Добавлен тест `telegram widget link is correct` - проверка Telegram-ссылки.
